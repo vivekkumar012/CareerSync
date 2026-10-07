@@ -135,8 +135,33 @@ export const loginUser = TryCatch(async (req, res, next) => {
   );
 
   res.json({
-    message: "User Login in successfully",
+    message: "User LoggedIn successfully",
     userObject,
     token,
   });
 });
+
+
+export const forgotPassword = TryCatch(async (req, res, next) => {
+  const {email} = req.body;
+  if(!email) {
+    throw new ErrorHandler(400, "Email is required")
+  }
+
+  const users = await sql`SELECT user_id email FROM users WHERE email = ${email}`;
+
+  if(users.length === 0) {
+    return res.json({
+      message: "If that email exists, we have sent a reset link"
+    })
+  }
+
+  const user = users[0];
+
+  const resetToken = await jwt.sign({
+    email: user.email,
+    type: "reset"
+  }, process.env.JWT_SEC as string, {expiresIn: "15m"});
+
+  const resetLink = `${process.env.Frontend_Url}/reset/${resetToken}`
+})
