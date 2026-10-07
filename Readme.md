@@ -1,6 +1,6 @@
 # 🚀 CareerSync
 
-**CareerSync** is an AI-powered, scalable **Job Portal Web Application** built using **Microservices Architecture** and an **Event-Driven System**.
+**CareerSync** is an AI-powered, scalable **Recruitment Platform Web Application** built using **Microservices Architecture** and an **Event-Driven System**.
 
 It connects job seekers and recruiters while providing AI-powered career guidance, resume analysis, job applications, profile management, real-time email notifications, and premium subscriptions.
 
