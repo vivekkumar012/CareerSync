@@ -4,7 +4,10 @@ import { sql } from "../utils/db.js";
 import ErrorHandler from "../utils/errorHandler.js";
 import { TryCatch } from "../utils/TryCatch.js";
 import bcrypt from "bcrypt";
-import jwt from "jsonwebtoken";
+import jwt, { decode } from "jsonwebtoken";
+import { forgotPasswordTemplate } from "../templete.js";
+import { publishToTopic } from "../producer.js";
+import { redisClient } from "../index.js";
 
 export const registerUser = TryCatch(async (req, res, next) => {
   const { name, email, password, phoneNumber, role, bio } = req.body;
@@ -28,7 +31,6 @@ export const registerUser = TryCatch(async (req, res, next) => {
       await sql`INSERT INTO users (name, email, password, phone_number, role) VALUES (${name}, ${email}, ${hashPassword}, ${phoneNumber}, ${role}) RETURNING user_id, name, email, phone_number, role, created_at `;
 
     registeredUser = user;
-
   } else if (role === "jobseeker") {
     const file = req.file;
     if (!file) {
@@ -71,7 +73,7 @@ export const registerUser = TryCatch(async (req, res, next) => {
 
       throw new ErrorHandler(
         error.response?.status || 502,
-        `Resume upload failed: ${uploadErrorMessage}`
+        `Resume upload failed: ${uploadErrorMessage}`,
       );
     }
 
@@ -82,7 +84,10 @@ export const registerUser = TryCatch(async (req, res, next) => {
       registeredUser = user;
     } catch (dbError: any) {
       console.error("Database user creation error:", dbError);
-      throw new ErrorHandler(500, dbError.message || "Failed to register user in database");
+      throw new ErrorHandler(
+        500,
+        dbError.message || "Failed to register user in database",
+      );
     }
   }
 
@@ -141,27 +146,89 @@ export const loginUser = TryCatch(async (req, res, next) => {
   });
 });
 
-
 export const forgotPassword = TryCatch(async (req, res, next) => {
-  const {email} = req.body;
-  if(!email) {
-    throw new ErrorHandler(400, "Email is required")
+  const { email } = req.body;
+  if (!email) {
+    throw new ErrorHandler(400, "Email is required");
   }
 
-  const users = await sql`SELECT user_id email FROM users WHERE email = ${email}`;
+  const users =
+    await sql`SELECT user_id email FROM users WHERE email = ${email}`;
 
-  if(users.length === 0) {
+  if (users.length === 0) {
     return res.json({
-      message: "If that email exists, we have sent a reset link"
-    })
+      message: "If that email exists, we have sent a reset link",
+    });
   }
 
   const user = users[0];
 
-  const resetToken = await jwt.sign({
-    email: user.email,
-    type: "reset"
-  }, process.env.JWT_SEC as string, {expiresIn: "15m"});
+  const resetToken = await jwt.sign(
+    {
+      email: user.email,
+      type: "reset",
+    },
+    process.env.JWT_SEC as string,
+    { expiresIn: "15m" },
+  );
 
-  const resetLink = `${process.env.Frontend_Url}/reset/${resetToken}`
+  const resetLink = `${process.env.Frontend_Url}/reset/${resetToken}`;
+
+  await redisClient.set(`forgot:${email}`, resetToken, {
+    EX: 900
+  });
+
+  const message = {
+    to: email,
+    subject: "RESET Your Password - CareerSync",
+    html: forgotPasswordTemplate(resetLink),
+  };
+
+  publishToTopic("send-mail", message).catch((error) => {
+    console.error("Failed to send msg", error)
+  });
+
+  return res.json({
+    message: "If that email exists, we have sent a reset link",
+  });
+});
+
+
+export const resetPassword = TryCatch(async (req, res, next) => {
+  const {token} = req.params;
+  const {password} = req.body;
+
+  let decoded: any;
+  try {
+    decoded = jwt.verify(token, process.env.JWT_SEC as string)
+  } catch (error) {
+    throw new ErrorHandler(400, "Expired token")
+  }
+
+  if(decoded.type !== "reset") {
+    throw new ErrorHandler(400, "Invalid token type");
+  }
+
+  const email = decoded.email;
+
+  const storedToken = await redisClient.get(`forgot:${email}`);
+  if(!storedToken || storedToken !== token) {
+    throw new ErrorHandler(400, "token has been expired");
+  }
+
+  const users = await sql`SELECT user_id FROM users WHERE email=${email}`;
+  if(users.length === 0) {
+    throw new ErrorHandler(404, "user not found")
+  }
+
+  const user = users[0];
+  const hashPassword = await bcrypt.hash(password, 10)
+
+  await sql`UPDATE users SET password=${hashPassword} WHERE user_id = ${user.user_id}`
+
+  await redisClient.del(`forgot:${email}`);
+
+  res.json({
+    message: "Password changed successfully"
+  })
 })
