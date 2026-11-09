@@ -1,4 +1,3 @@
-
 import axios from "axios";
 import { AuthenticatedRequest } from "../middlewares/auth.js";
 import getBuffer from "../utils/buffer.js";
@@ -6,15 +5,17 @@ import { sql } from "../utils/db.js";
 import ErrorHandler from "../utils/errorHandler.js";
 import { TryCatch } from "../utils/TryCatch.js";
 
-export const myProfile = TryCatch(async (req: AuthenticatedRequest, res, next) => {
+export const myProfile = TryCatch(
+  async (req: AuthenticatedRequest, res, next) => {
     const user = req.user;
     res.json(user);
-});
+  },
+);
 
 export const getUserProfile = TryCatch(async (req, res, next) => {
-    const {userId} = req.params;
+  const { userId } = req.params;
 
-    const users = await sql`
+  const users = await sql`
           SELECT u.user_id, u.name, u.email, u.phone_number, u.role, u.bio, u.resume, u.resume_public_id, u.profile_pic, u.profile_pic_public_id, u.subscription,
           ARRAY_AGG(s.name) FILTER (WHERE s.name IS NOT NULL) as skills
           FROM users u LEFT JOIN user_skills us ON u.user_id = us.user_id
@@ -23,25 +24,25 @@ export const getUserProfile = TryCatch(async (req, res, next) => {
           GROUP BY u.user_id;
         `;
 
-    if(users.length === 0) {
-      throw new ErrorHandler(404, "User Not Found");
-    }
-    const user = users[0];
+  if (users.length === 0) {
+    throw new ErrorHandler(404, "User Not Found");
+  }
+  const user = users[0];
 
-    user.skills = user.skills || [];
+  user.skills = user.skills || [];
 
-    res.json(user);
+  res.json(user);
 });
 
-
-export const updateUserProfile = TryCatch(async (req: AuthenticatedRequest, res) => {
+export const updateUserProfile = TryCatch(
+  async (req: AuthenticatedRequest, res) => {
     const user = req.user;
-    
-    if(!user) {
-        throw new ErrorHandler(401, "Authentication required");
+
+    if (!user) {
+      throw new ErrorHandler(401, "Authentication required");
     }
 
-    const {name, phoneNumber, bio} = req.body;
+    const { name, phoneNumber, bio } = req.body;
 
     const newName = name || user.name;
     const newPhoneNumber = phoneNumber || user.phone_number;
@@ -54,37 +55,41 @@ export const updateUserProfile = TryCatch(async (req: AuthenticatedRequest, res)
     `;
 
     res.json({
-        message: "Profile Updated Successfully",
-        updatedUser
+      message: "Profile Updated Successfully",
+      updatedUser,
     });
-});
+  },
+);
 
-
-export const updateProfilePic = TryCatch(async (req: AuthenticatedRequest, res) => {
+export const updateProfilePic = TryCatch(
+  async (req: AuthenticatedRequest, res) => {
     const user = req.user;
 
-    if(!user) {
-        throw new ErrorHandler(401, "Authentication required");
+    if (!user) {
+      throw new ErrorHandler(401, "Authentication required");
     }
 
     const file = req.file;
 
-    if(!file) {
-        throw new ErrorHandler(400, "No Image file is provided");
+    if (!file) {
+      throw new ErrorHandler(400, "No Image file is provided");
     }
 
     const oldPublicId = user.profile_pic_public_id;
 
     const fileBuffer = getBuffer(file);
 
-    if(!fileBuffer || !fileBuffer.content) {
-        throw new ErrorHandler(500, "failed to generate Buffer");
+    if (!fileBuffer || !fileBuffer.content) {
+      throw new ErrorHandler(500, "failed to generate Buffer");
     }
 
-    const {data: uploadResult} = await axios.post(`${process.env.UPLOAD_SERVICE}/api/utils/upload`, {
+    const { data: uploadResult } = await axios.post(
+      `${process.env.UPLOAD_SERVICE}/api/utils/upload`,
+      {
         buffer: fileBuffer.content,
-        public_id: oldPublicId
-    });
+        public_id: oldPublicId,
+      },
+    );
 
     const [updatedUser] = await sql`
     UPDATE users SET profile_pic = ${uploadResult.url}, profile_pic_public_id = ${uploadResult.public_id}
@@ -92,182 +97,202 @@ export const updateProfilePic = TryCatch(async (req: AuthenticatedRequest, res) 
     `;
 
     res.json({
-        message: "Profile Pic Updated",
-        user: updatedUser
-    })
-});
+      message: "Profile Pic Updated",
+      user: updatedUser,
+    });
+  },
+);
 
 export const updateResume = TryCatch(async (req: AuthenticatedRequest, res) => {
-    const user = req.user;
+  const user = req.user;
 
-    if(!user) {
-        throw new ErrorHandler(401, "Authentication required");
-    }
+  if (!user) {
+    throw new ErrorHandler(401, "Authentication required");
+  }
 
-    const file = req.file;
+  const file = req.file;
 
-    if(!file) {
-        throw new ErrorHandler(400, "No pdf file is provided");
-    }
+  if (!file) {
+    throw new ErrorHandler(400, "No pdf file is provided");
+  }
 
-    const oldPublicId = user.resume_public_id;
+  const oldPublicId = user.resume_public_id;
 
-    const fileBuffer = getBuffer(file);
+  const fileBuffer = getBuffer(file);
 
-    if(!fileBuffer || !fileBuffer.content) {
-        throw new ErrorHandler(500, "failed to generate Buffer");
-    }
+  if (!fileBuffer || !fileBuffer.content) {
+    throw new ErrorHandler(500, "failed to generate Buffer");
+  }
 
-    const {data: uploadResult} = await axios.post(`${process.env.UPLOAD_SERVICE}/api/utils/upload`, {
-        buffer: fileBuffer.content,
-        public_id: oldPublicId
-    });
+  const { data: uploadResult } = await axios.post(
+    `${process.env.UPLOAD_SERVICE}/api/utils/upload`,
+    {
+      buffer: fileBuffer.content,
+      public_id: oldPublicId,
+    },
+  );
 
-    const [updatedUser] = await sql`
+  const [updatedUser] = await sql`
     UPDATE users SET resume = ${uploadResult.url}, resume_public_id = ${uploadResult.public_id}
     WHERE user_id = ${user.user_id} RETURNING user_id, name, resume; 
     `;
 
-    res.json({
-        message: "Resume Updated",
-        user: updatedUser
-    })
+  res.json({
+    message: "Resume Updated",
+    user: updatedUser,
+  });
 });
 
-export const addSkillToUser = TryCatch(async (req: AuthenticatedRequest, res) => {
+export const addSkillToUser = TryCatch(
+  async (req: AuthenticatedRequest, res) => {
     const userId = req.user?.user_id;
-    const {skillName} = req.body;
+    const { skillName } = req.body;
 
-    if(!skillName || skillName.trim() === "") {
-        throw new ErrorHandler(400, "Please Provide a skill name");
+    if (!skillName || skillName.trim() === "") {
+      throw new ErrorHandler(400, "Please Provide a skill name");
     }
 
     let wasSkillAdded = false;
 
     try {
-        await sql`BEGIN`;
+      await sql`BEGIN`;
 
-        const users = await sql`SELECT user_id FROM users WHERE user_id = ${userId}`;
+      const users =
+        await sql`SELECT user_id FROM users WHERE user_id = ${userId}`;
 
-        if(users.length === 0) {
-            throw new ErrorHandler(404, "User not found");
-        }
+      if (users.length === 0) {
+        throw new ErrorHandler(404, "User not found");
+      }
 
-        const [skill] = await sql`INSERT INTO skills (name) VALUES (${skillName.trim()}) ON CONFLICT (name) DO UPDATE SET name = EXCLUDED.name RETURNING skill_id`;
+      const [skill] =
+        await sql`INSERT INTO skills (name) VALUES (${skillName.trim()}) ON CONFLICT (name) DO UPDATE SET name = EXCLUDED.name RETURNING skill_id`;
 
-        const skillId = skill.skill_id;
+      const skillId = skill.skill_id;
 
-        const insertionResult = await sql`INSERT INTO user_skills (user_id, skill_id) VALUES (${userId}, ${skillId}) ON CONFLICT (user_id, skill_id) DO NOTHING RETURNING user_id`;
+      const insertionResult =
+        await sql`INSERT INTO user_skills (user_id, skill_id) VALUES (${userId}, ${skillId}) ON CONFLICT (user_id, skill_id) DO NOTHING RETURNING user_id`;
 
-        if(insertionResult.length > 0) {
-            wasSkillAdded = true
-        }
+      if (insertionResult.length > 0) {
+        wasSkillAdded = true;
+      }
 
-        await sql`COMMIT`;
+      await sql`COMMIT`;
     } catch (error) {
-        await sql`ROLLBACK`;
-        throw error;
+      await sql`ROLLBACK`;
+      throw error;
     }
 
-    if(!wasSkillAdded) {
-        res.status(200).json({
-            message: "User already Possesses this skill"
-        })
+    if (!wasSkillAdded) {
+      res.status(200).json({
+        message: "User already Possesses this skill",
+      });
     }
 
     res.json({
-        message: `Skill ${skillName.trim()} is added successfully`
-    })
-});
+      message: `Skill ${skillName.trim()} is added successfully`,
+    });
+  },
+);
 
-export const deleteSkillFromUser = TryCatch(async (req: AuthenticatedRequest, res) => {
+export const deleteSkillFromUser = TryCatch(
+  async (req: AuthenticatedRequest, res) => {
     const user = req.user;
 
-    if(!user) {
-        throw new ErrorHandler(401, "Authentication Required");
+    if (!user) {
+      throw new ErrorHandler(401, "Authentication Required");
     }
 
-    const {skillName} = req.body;
+    const { skillName } = req.body;
 
-    if(!skillName || skillName.trim() === "") {
-        throw new ErrorHandler(400, "Please Provide a skill name");
+    if (!skillName || skillName.trim() === "") {
+      throw new ErrorHandler(400, "Please Provide a skill name");
     }
-    
-    const result = await sql`DELETE FROM user_skills WHERE user_id = ${user.user_id} AND skill_id = (SELECT skill_id FROM skills WHERE name = ${skillName.trim()}) RETURNING user_id`;
 
-    if(result.length === 0) {
-        throw new ErrorHandler(404, `Skill ${skillName.trim()} was not found`)
+    const result =
+      await sql`DELETE FROM user_skills WHERE user_id = ${user.user_id} AND skill_id = (SELECT skill_id FROM skills WHERE name = ${skillName.trim()}) RETURNING user_id`;
+
+    if (result.length === 0) {
+      throw new ErrorHandler(404, `Skill ${skillName.trim()} was not found`);
     }
-    
+
     res.json({
-        message: `Skill ${skillName.trim()} was deleted successfully`
-    })
-});
+      message: `Skill ${skillName.trim()} was deleted successfully`,
+    });
+  },
+);
 
 export const applyForJob = TryCatch(async (req: AuthenticatedRequest, res) => {
-    const user = req.user;
+  const user = req.user;
 
-    if(!user) {
-        throw new ErrorHandler(401, "Authentication required");
-    }
+  if (!user) {
+    throw new ErrorHandler(401, "Authentication required");
+  }
 
-    if(user.role !== "jobseeker") {
-        throw new ErrorHandler(403, "Forbidden you are not allowed for this api");
-    }
+  if (user.role !== "jobseeker") {
+    throw new ErrorHandler(403, "Forbidden you are not allowed for this api");
+  }
 
-    const applicant_id = user.user_id;
+  const applicant_id = user.user_id;
 
-    const resume = user.resume;
+  const resume = user.resume;
 
-    if(!resume) {
-        throw new ErrorHandler(400, "You need to add resume in your profile to apply");
-    }
+  if (!resume) {
+    throw new ErrorHandler(
+      400,
+      "You need to add resume in your profile to apply",
+    );
+  }
 
-    const {job_id} = req.body;
+  const { job_id } = req.body;
 
-    if(!job_id) {
-        throw new ErrorHandler(400, "Job id is required");
-    }
+  if (!job_id) {
+    throw new ErrorHandler(400, "Job id is required");
+  }
 
-    const [job] = await sql`SELECT is_active FROM jobs WHERE job_id = ${job_id}`;
+  const [job] = await sql`SELECT is_active FROM jobs WHERE job_id = ${job_id}`;
 
-    if(!job) {
-        throw new ErrorHandler(404, "No jobs with this id");
-    }
+  if (!job) {
+    throw new ErrorHandler(404, "No jobs with this id");
+  }
 
-    if(!job.is_active) {
-        throw new ErrorHandler(400, "Job is not active");
-    }
+  if (!job.is_active) {
+    throw new ErrorHandler(400, "Job is not active");
+  }
 
-    const now = Date.now();
+  const now = Date.now();
 
-    const subTime = req.user?.subscription ? new Date(req.user.subscription).getTime() : 0;
+  const subTime = req.user?.subscription
+    ? new Date(req.user.subscription).getTime()
+    : 0;
 
-    const isSubscribed = subTime > now;
+  const isSubscribed = subTime > now;
 
-    let newApplication;
+  let newApplication;
 
-    try {
-        [newApplication] = await sql`INSERT INTO applications (job_id, applicant_id, applicant_email, resume, subscribed)
+  try {
+    [newApplication] =
+      await sql`INSERT INTO applications (job_id, applicant_id, applicant_email, resume, subscribed)
                                     VALUES (${job_id}, ${applicant_id}, ${user?.email}, ${resume}, ${isSubscribed})`;
-    } catch (error: any) {
-        if(error.code === "23505") {
-            throw new ErrorHandler(409, "You have already applied to this job");
-        }
-        throw error;
+  } catch (error: any) {
+    if (error.code === "23505") {
+      throw new ErrorHandler(409, "You have already applied to this job");
     }
+    throw error;
+  }
 
-    res.json({
-        message: "Applied for jobs successfully",
-        application: newApplication
-    })
+  res.json({
+    message: "Applied for jobs successfully",
+    application: newApplication,
+  });
 });
 
-export const getAllApplications = TryCatch(async(req: AuthenticatedRequest, res) => {
+export const getAllApplications = TryCatch(
+  async (req: AuthenticatedRequest, res) => {
     const applications = await sql`
         SELECT a.*, j.title AS job_title, j.salary AS job_salary, j.location AS job_location FROM applications a
         JOIN jobs j ON  a.job_id = j.job_id WHERE a.applicant_id = ${req.user?.user_id}
     `;
 
     res.json(applications);
-})
+  },
+);
