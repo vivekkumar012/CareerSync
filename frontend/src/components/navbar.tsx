@@ -3,8 +3,19 @@
 import Link from "next/link";
 import React, { useState } from "react";
 import { Button } from "./ui/button";
-import { Briefcase, Ghost, Home, Info, User } from "lucide-react";
-import { Popover, PopoverTrigger } from "./ui/popover";
+import {
+  Briefcase,
+  Ghost,
+  Home,
+  Info,
+  LogOut,
+  Menu,
+  User,
+  X,
+} from "lucide-react";
+import { Popover, PopoverContent, PopoverTrigger } from "./ui/popover";
+import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar";
+import { ModeToggle } from "./mode-toggle";
 
 const NavBar = () => {
   const [isOpen, setIsOpen] = useState(false);
@@ -65,7 +76,43 @@ const NavBar = () => {
           <div className="hidden md:flex items-center gap-3">
             {isAuth ? (
               <Popover>
-                <PopoverTrigger></PopoverTrigger>
+                <PopoverTrigger asChild>
+                  <button className="flex items-center gap-2 hover:opacity-80 transition-opacity">
+                    <Avatar className="h-9 w-9 ring-2 ring-offset-2 ring-offset-background ring-blue-500 cursor-pointer hover:ring-blue-500/40 transition-all">
+                      {/* <AvatarImage src={} alt=""/> */}
+                      <AvatarFallback className="bg-blue-100 dark:bg-blue-900 text-blue-600 ">
+                        P
+                      </AvatarFallback>
+                    </Avatar>
+                  </button>
+                </PopoverTrigger>
+
+                <PopoverContent className="w-56 p-2" align="end">
+                  <div className="px-3 py-2 mb-2 border-b">
+                    <p className="text-sm font-semibold">Vivek</p>
+                    <p className="text-xs opacity-60 truncate">
+                      vivek@gmail.com
+                    </p>
+                  </div>
+
+                  <Link href={"/account"}>
+                    <Button
+                      className="w-full justify-start gap-2"
+                      variant={"ghost"}
+                    >
+                      <User size={16} /> My Profile
+                    </Button>
+                  </Link>
+
+                  <Button
+                    className="w-full justify-start gap-2 mt-1"
+                    variant={"ghost"}
+                    onClick={logoutHandler}
+                  >
+                    <LogOut size={16} />
+                    Logout
+                  </Button>
+                </PopoverContent>
               </Popover>
             ) : (
               <Link href={"/login"}>
@@ -75,7 +122,86 @@ const NavBar = () => {
                 </Button>
               </Link>
             )}
+
+            <ModeToggle />
           </div>
+
+          {/* Mobile menu buttons */}
+          <div className="md:hidden flex items-center gap-3">
+            <ModeToggle />
+
+            <button
+              onClick={toggleMenu}
+              className="p-2 rounded-lg hover:bg-accent transition-colors "
+              aria-label="Toggle menu"
+            >
+              {isOpen ? <X size={24} /> : <Menu size={24} />}
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {/* mobile view */}
+      <div
+        className={`md:hidden border-t overflow-hidden transition-all duration-300 ease-in-out cursor-pointer ${isOpen ? "max-h-96 opacity-100" : "max-h-0 opacity-0"}`}
+      >
+        <div className="px-3 py-3 space-y-1 bg-background/95 backdrop-blur-md ">
+          {/* isAuth or user */}
+          <Link href={"/"} onClick={toggleMenu}>
+            <Button
+              className="w-full justify-start gap-3 h-11 cursor-pointer"
+              variant={"ghost"}
+            >
+              <Home size={18} /> Home
+            </Button>
+          </Link>
+
+          <Link href={"/jobs"} onClick={toggleMenu}>
+            <Button
+              className="w-full justify-start gap-3 h-11 cursor-pointer"
+              variant={"ghost"}
+            >
+              <Briefcase size={18} /> Jobs
+            </Button>
+          </Link>
+
+          <Link href={"/"} onClick={toggleMenu}>
+            <Button
+              className="w-full justify-start gap-3 h-11 cursor-pointer"
+              variant={"ghost"}
+            >
+              <Info size={18} /> About
+            </Button>
+          </Link>
+
+          {isAuth ? (
+            <>
+              <Link href={"/"} onClick={toggleMenu}>
+                <Button
+                  className="w-full justify-start gap-3 h-11 cursor-pointer"
+                  variant={"ghost"}
+                >
+                  <User size={18} /> My Profile
+                </Button>
+              </Link>
+              <Button
+                className="w-full justify-start gap-3 h-11 cursor-pointer"
+                variant={"destructive"}
+                onClick={() => {
+                  logoutHandler();
+                  toggleMenu();
+                }}
+              >
+                <LogOut size={18} /> Logout
+              </Button>
+            </>
+          ) : (
+            <Link href={"/login"} onClick={toggleMenu}>
+              <Button className="w-full justify-start gap-3 h-11 mt-2 cursor-pointer">
+                <User size={18} /> SignIn
+              </Button>
+            </Link>
+          )}
         </div>
       </div>
     </nav>
