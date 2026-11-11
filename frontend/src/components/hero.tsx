@@ -71,6 +71,25 @@ const Hero = () => {
             </div>
 
             {/* trust indicator section */}
+            <div className="flex items-center gap-2 text-sm opacity-60 pt-4">
+              <span>✔️Free to use</span>
+              <span>•</span>
+              <span>✔️Verified Employers</span>
+              <span>•</span>
+              <span>✔️Secure Platform</span>
+              
+            </div>
+          </div>
+
+          {/* image section */}
+          <div className="flex-1 relative">
+            <div className="relative group">
+              <div className="absolute -inset-4 bg-blue-400 opacity-20 blur-xl group-hover:opacity-30 transition-opacity"></div>
+
+              <div className="relative rounded-2xl overflow-hidden shadow-2xl border-4 border-background">
+                <img src="/hero.jpeg" className="object-cover object-center w-full h-full transform transition-transform duration-500 group-hover:scale-105" alt="" />
+              </div>
+            </div>
           </div>
         </div>
       </div>
