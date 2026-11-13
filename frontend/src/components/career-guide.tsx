@@ -1,6 +1,6 @@
 "use client";
 
-import { CareerGuideResponse, utils_service } from "@/type";
+import { CareerGuideResponse } from "@/type";
 import axios from "axios";
 import {
   ArrowRight,
@@ -25,6 +25,7 @@ import {
 import { Button } from "./ui/button";
 import { Label } from "./ui/label";
 import { Input } from "./ui/input";
+import { utils_service } from "@/context/AppContext";
 
 const CareerGuide = () => {
   const [open, setOpen] = useState(false);

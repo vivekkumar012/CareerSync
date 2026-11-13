@@ -1,4 +1,4 @@
-"use client";
+83"use client";
 
 import Link from "next/link";
 import React, { useState } from "react";
@@ -16,15 +16,16 @@ import {
 import { Popover, PopoverContent, PopoverTrigger } from "./ui/popover";
 import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar";
 import { ModeToggle } from "./mode-toggle";
+import { useAppData } from "@/context/AppContext";
 
 const NavBar = () => {
   const [isOpen, setIsOpen] = useState(false);
+-
+  const { isAuth, user, setIsAuth, setUser, loading } = useAppData();
 
   const toggleMenu = () => {
     setIsOpen(!isOpen);
   };
-
-  const isAuth = false;
 
   const logoutHandler = () => {};
   return (
@@ -74,14 +75,18 @@ const NavBar = () => {
 
           {/* Right side actions */}
           <div className="hidden md:flex items-center gap-3">
-            {isAuth ? (
+            {
+              loading ? "" : <>{isAuth ? (
               <Popover>
                 <PopoverTrigger asChild>
                   <button className="flex items-center gap-2 hover:opacity-80 transition-opacity">
                     <Avatar className="h-9 w-9 ring-2 ring-offset-2 ring-offset-background ring-blue-500 cursor-pointer hover:ring-blue-500/40 transition-all">
-                      {/* <AvatarImage src={} alt=""/> */}
+                      <AvatarImage
+                        src={user ? (user.profile_pic as string) : ""}
+                        alt={user ? user.name : ""}
+                      />
                       <AvatarFallback className="bg-blue-100 dark:bg-blue-900 text-blue-600 ">
-                        P
+                        {user?.name?.charAt(0).toUpperCase() || "U"}
                       </AvatarFallback>
                     </Avatar>
                   </button>
@@ -121,7 +126,8 @@ const NavBar = () => {
                   Sign In
                 </Button>
               </Link>
-            )}
+            )}</>
+            }
 
             <ModeToggle />
           </div>

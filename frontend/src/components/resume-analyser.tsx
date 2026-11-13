@@ -22,8 +22,9 @@ import {
   Zap,
 } from "lucide-react";
 import axios from "axios";
-import { ResumeAnalysisResponse, utils_service } from "@/type";
+import { ResumeAnalysisResponse } from "@/type";
 import toast from "react-hot-toast";
+import { utils_service } from "@/context/AppContext";
 
 
 const ResumeAnalyzer = () => {
