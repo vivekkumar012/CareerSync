@@ -26,3 +26,5 @@ export interface CareerGuideResponse {
     skillsToLearn: SkillCategory[];
     learningApproach: LearningApproach;
 }
+
+export const utils_service = "http://localhost:5001"
