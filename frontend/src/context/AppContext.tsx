@@ -2,7 +2,7 @@
 
 import { AppContextType, AppProviderProps, User } from "@/type";
 import React, { createContext, useContext, useEffect, useState } from "react";
-import { Toaster } from "react-hot-toast";
+import toast, { Toaster } from "react-hot-toast";
 import Cookies from "js-cookie";
 import axios from "axios";
 
@@ -23,27 +23,33 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
 
   async function fetchUser() {
     try {
-        const {data} = await axios.get(`${user_service}/api/user/me`, {
-            headers: {
-                Authorization: `Bearer ${token}`
-            },
-        });
+      const { data } = await axios.get(`${user_service}/api/user/me`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
 
-        setUser(data);
-        setIsAuth(true);
-
+      setUser(data);
+      setIsAuth(true);
     } catch (error) {
-        console.log(error);
-        setIsAuth(false);
-    }finally {
-        setLoading(false);
+      console.log(error);
+      setIsAuth(false);
+    } finally {
+      setLoading(false);
     }
   }
 
   useEffect(() => {
-    fetchUser()
-  }, [])
-  
+    fetchUser();
+  }, []);
+
+  async function logoutUser() {
+    Cookies.set("token", "");
+    setUser(null);
+    setIsAuth(false);
+    toast.success("Logged out successfully");
+  }
+
   return (
     <AppContext.Provider
       value={{
@@ -54,6 +60,7 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
         isAuth,
         setIsAuth,
         setLoading,
+        logoutUser
       }}
     >
       {children}

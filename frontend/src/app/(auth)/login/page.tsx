@@ -39,7 +39,7 @@ const LoginPage = () => {
         path: "/",
       });
 
-      setUser(data.user);
+      setUser(data.userObject);
       setIsAuth(true);
     } catch (error: any) {
       toast.error(error.response.data.message);
@@ -113,7 +113,7 @@ const LoginPage = () => {
 
           <div className="mt-6 pt-6 border-t border-gray-400">
             <p className="text-center text-sm">
-              Don't have an account?{" "}
+              Don&apos;t have an account?{" "}
               <Link
                 href={"/register"}
                 className="text-blue-500 font-medium hover:underline transition-all"

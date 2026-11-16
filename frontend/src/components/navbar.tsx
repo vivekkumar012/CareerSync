@@ -1,4 +1,4 @@
-83"use client";
+"use client";
 
 import Link from "next/link";
 import React, { useState } from "react";
@@ -20,14 +20,16 @@ import { useAppData } from "@/context/AppContext";
 
 const NavBar = () => {
   const [isOpen, setIsOpen] = useState(false);
--
-  const { isAuth, user, setIsAuth, setUser, loading } = useAppData();
+
+  const { isAuth, user, setIsAuth, setUser, loading, logoutUser } = useAppData();
 
   const toggleMenu = () => {
     setIsOpen(!isOpen);
   };
 
-  const logoutHandler = () => {};
+  const logoutHandler = () => {
+    logoutUser();
+  };
   return (
     <nav className="z-50 sticky top-0 bg-background/80 border-b backdrop-blur-md shadow-md">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -94,9 +96,9 @@ const NavBar = () => {
 
                 <PopoverContent className="w-56 p-2" align="end">
                   <div className="px-3 py-2 mb-2 border-b">
-                    <p className="text-sm font-semibold">Vivek</p>
+                    <p className="text-sm font-semibold">{user && user.name}</p>
                     <p className="text-xs opacity-60 truncate">
-                      vivek@gmail.com
+                      {user && user.email}
                     </p>
                   </div>
 
