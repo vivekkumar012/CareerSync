@@ -1,0 +1,12 @@
+import dotenv from "dotenv";
+dotenv.config();
+
+import { createRedisClient, createRateLimiter, createCache } from "@careersync/common";
+
+export const redisClient = createRedisClient({
+  url: process.env.Redis_url,
+  label: "Payment service",
+});
+
+export const rateLimiter = createRateLimiter(redisClient);
+export const cache = createCache(redisClient);

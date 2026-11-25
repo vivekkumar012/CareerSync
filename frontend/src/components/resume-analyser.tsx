@@ -23,9 +23,8 @@ import {
 } from "lucide-react";
 import axios from "axios";
 import { ResumeAnalysisResponse } from "@/type";
-import toast from "react-hot-toast";
 import { utils_service } from "@/context/AppContext";
-
+import toast from "react-hot-toast";
 
 const ResumeAnalyzer = () => {
   const [open, setOpen] = useState(false);
@@ -42,7 +41,7 @@ const ResumeAnalyzer = () => {
         return;
       }
       if (selectedFile.size > 5 * 1024 * 1024) {
-        toast.error("File size should be less than 5MB");
+        toast.error("File must be 5MB or smaller");
         return;
       }
       setFile(selectedFile);
@@ -71,10 +70,10 @@ const ResumeAnalyzer = () => {
         `${utils_service}/api/utils/resume-analyser`,
         {
           pdfBase64: base64,
-        },
+        }
       );
       setResponse(data);
-      toast.success("Resume analyzed successfully!");
+      toast.success("Resume analyzed successfully");
     } catch (error: any) {
       toast.error(error.response?.data?.message || "Failed to analyze resume");
       console.log(error);
@@ -225,7 +224,7 @@ pointer hover:border-blue-500 transition-colors"
                   {/* Overall Score */}
                   <div
                     className={`p-6 rounded-lg ${getScoreBgColor(
-                      response.atsScore,
+                      response.atsScore
                     )} border-2`}
                   >
                     <div className="text-center">
@@ -234,7 +233,7 @@ pointer hover:border-blue-500 transition-colors"
                       </p>
                       <div
                         className={`text-6xl font-bold ${getScoreColor(
-                          response.atsScore,
+                          response.atsScore
                         )}`}
                       >
                         {response.atsScore}
@@ -267,7 +266,7 @@ border-blue-200 dark:border-blue-800"
                               <p className="font-semibold capitalize">{key}</p>
                               <span
                                 className={`text-lg font-bold ${getScoreColor(
-                                  value.score,
+                                  value.score
                                 )}`}
                               >
                                 {value.score}%
@@ -277,7 +276,7 @@ border-blue-200 dark:border-blue-800"
                               {value.feedback}
                             </p>
                           </div>
-                        ),
+                        )
                       )}
                     </div>
                   </div>

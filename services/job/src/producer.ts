@@ -1,69 +1,71 @@
-import { Admin, Kafka, Producer } from "kafkajs";
-import dotenv from "dotenv"
-
+import { Producer, Admin } from "kafkajs";
+import { createKafkaClient } from "@careersync/common";
+import dotenv from "dotenv";
 dotenv.config();
 
 let producer: Producer;
 let admin: Admin;
 
-
 export const connectKafka = async () => {
-    try {
-        const kafka = new Kafka({
-            clientId: "auth-service",
-            brokers: [process.env.Kafka_Broker || "localhost:9092"]
-        });
+  try {
+    const kafka = createKafkaClient("job-service");
 
-        admin = kafka.admin();
-        await admin.connect();
+    // The Admin client is temporarily used to manage topics
+    admin = kafka.admin();
+    await admin.connect();
 
-        const topics = await admin.listTopics();
+    const topics = await admin.listTopics();
 
-        if(!topics.includes("send-mail")) {
-            await admin.createTopics({
-                topics: [
-                    {
-                        topic: "send-mail",
-                        numPartitions: 1,
-                        replicationFactor: 1
-                    }
-                ]
-            });
-            console.log("Topic 'send-mail' created")
-        }
-
-        await admin.disconnect();
-
-        producer = kafka.producer();
-        console.log("Connected to Kafka Producer");
-
-    } catch (error) {
-        console.log("Failed to connect to kafka", error)
+    if (!topics.includes("send-mail")) {
+      await admin.createTopics({
+        topics: [
+          {
+            topic: "send-mail",
+            numPartitions: 1,
+            replicationFactor: 1,
+          },
+        ],
+      });
+      console.log("✅ Topic 'send-mail' created");
     }
-}
+
+    await admin.disconnect();
+
+    producer = kafka.producer();
+
+    await producer.connect();
+
+    console.log("✅ Connected to kafka producer");
+  
+  } catch (error) {
+    console.log("Failed to connect to kafka", error);
+  }
+};
+
 
 export const publishToTopic = async (topic: string, message: any) => {
-    if(!producer) {
-        console.log("Kafka Producer is not initialized");
-        return ;
-    }
+  if (!producer) {
+    console.log("❌ Kafka producer is not initialized");
+    return;
+  }
 
-    try {
-        await producer.send({
-            topic: topic,
-            messages: [
-                {
-                    value: JSON.stringify(message)
-                }
-            ]
-        })
-    } catch (error) {
-        console.log("Failed to publish message to kafka", error)
-    }
-}
+  try {
+    await producer.send({
+      topic: topic,
+      messages: [
+        {
+          value: JSON.stringify(message),
+        },
+      ],
+    });
+  } catch (error) {
+    console.log("Failed to publish message to kafka", error);
+  }
+};
+
 
 export const disconnectKafka = async () => {
-    if(producer) {
-        producer.disconnect();
-    }
-}
+  if (producer) {
+    producer.disconnect();
+  }
+};

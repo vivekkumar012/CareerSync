@@ -1,54 +1,59 @@
-import {Kafka} from "kafkajs";
+import { createKafkaClient } from "@careersync/common";
 import nodemailer from "nodemailer";
-import dotenv from "dotenv"
+import dotenv from "dotenv";
 
 dotenv.config();
 
 export const startSendMailConsumer = async () => {
-    try {
-        const kafka = new Kafka({
-            clientId: "mail-service",
-            brokers: [process.env.Kafka_Broker || "localhost:9092"]
-        });
+  try {
+    const kafka = createKafkaClient("mail-service");
 
-        const consumer = kafka.consumer({groupId: "mail-service-group"});
-        await consumer.connect();
+    const consumer = kafka.consumer({ groupId: "mail-service-group" });
 
-        const topicName = "send-mail";
+    await consumer.connect();
 
-        await consumer.subscribe({topic: topicName, fromBeginning: false});
+    const topicName = "send-mail";
 
-        console.log("✅ Mail service consumer started, listening for sending mail");
+    await consumer.subscribe({ topic: topicName, fromBeginning: false });
+    // The fromBeginning: false option means that the consumer does not start from the earliest message in the topic. Instead, it processes new messages from its current position onward, 
+    // preventing the service from unnecessarily processing old email events when it starts
 
-        await consumer.run({
-            eachMessage: async ({topic, partition, message}) => {
-                try {
-                    const {to, subject, html} = JSON.parse(message.value?.toString() || "{}");
+    console.log("✅ Mail service consumer started, listening for sending mail");
 
-                    const transporter = nodemailer.createTransport({
-                        host: "smtp.gmail.com",
-                        port: 465,
-                        secure: true,
-                        auth: {
-                            user: process.env.SMTP_USER,
-                            pass: process.env.SMTP_PASS
-                        },
-                    });
+    // The consumer continuously listens for new messages on the "send-mail" topic
+    await consumer.run({
+      eachMessage: async ({ topic, partition, message }) => {
+        try {
+          const { to, subject, html } = JSON.parse(     // The message.value is a Buffer, so we convert it to a string and then parse it as JSON to extract the email details
+            message.value?.toString() || "{}"
+          );
 
-                    await transporter.sendMail({
-                        from: "CareerSync <no-reply>",
-                        to,
-                        subject,
-                        html
-                    });
+          const transporter = nodemailer.createTransport({
+            host: "smtp.gmail.com",
+            port: 465,
+            secure: true,
+            auth: {
+              user: process.env.SMTP_USER,
+              pass: process.env.SMTP_PASS,
+            },
+          });
 
-                    console.log(`Mail has been sent to ${to}`);
-                } catch (error) {
-                    console.log("Failed to send mail", error)
-                }
-            }
-        })
-    } catch (error) {
-        console.log("failed to start kafka consumer", error); 
-    }
-}
+          await transporter.sendMail({
+            from: "CareerSync <no-reply>",
+            to,
+            subject,
+            html,
+          });
+
+          console.log(`Mail has been sent to ${to}`);
+          
+        } catch (error) {
+          console.log("Failed to send mail", error);
+        }
+      },
+    });
+
+  } catch (error) {
+    console.log("Failed to start kafka consumer", error);
+  }
+};

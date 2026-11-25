@@ -1,0 +1,17 @@
+# dependencies
+node_modules/
+services/*/node_modules/
+packages/*/node_modules/
+
+# build output
+services/*/dist/
+packages/*/dist/
+
+# secrets — never commit real .env files, only .env.example
+services/*/.env
+frontend/.env
+
+# misc
+.DS_Store
+*.pem
+npm-debug.log*

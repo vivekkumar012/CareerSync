@@ -1,23 +1,26 @@
 "use client";
-
 import { auth_service, useAppData } from "@/context/AppContext";
 import axios from "axios";
 import { redirect } from "next/navigation";
 import React, { FormEvent, useState } from "react";
 import toast from "react-hot-toast";
-import Cookie from "js-cookie";
+import Cookies from "js-cookie";
 import { Label } from "@/components/ui/label";
 import { ArrowRight, Lock, Mail } from "lucide-react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import Loading from "@/components/loading";
+import { getErrorMessage } from "@/lib/utils";
 
 const LoginPage = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [btnLoading, setBtnLoading] = useState(false);
 
-  const { isAuth, setUser, loading, setIsAuth } = useAppData();
+  const { isAuth, setUser, loading, setIsAuth, fetchApplications } = useAppData();
+
+  if (loading) return <Loading />;
 
   if (isAuth) return redirect("/");
 
@@ -33,21 +36,31 @@ const LoginPage = () => {
 
       toast.success(data.message);
 
-      Cookie.set("token", data.token, {
-        expires: 15,
-        secure: true,
+      Cookies.set("token", data.accessToken, {
+        expires: 1 / 96,
+        secure: false,
         path: "/",
       });
 
-      setUser(data.userObject);
+      Cookies.set("refreshToken", data.refreshToken, {
+        expires: 7,
+        secure: false,
+        path: "/",
+      });
+
+      setUser(data.user);
       setIsAuth(true);
+      fetchApplications();
+      
     } catch (error: any) {
-      toast.error(error.response.data.message);
+      console.log(error);
+      toast.error(getErrorMessage(error));
       setIsAuth(false);
     } finally {
       setBtnLoading(false);
     }
   };
+
   return (
     <div className="min-h-screen flex items-center justify-center px-4 py-12">
       <div className="w-full max-w-md">
@@ -57,7 +70,6 @@ const LoginPage = () => {
           </h1>
           <p className="text-sm opacity-70">Sign in to continue your journey</p>
         </div>
-
         <div className="border border-gray-400 rounded-2xl p-8 shadow-lg backdrop-blur-sm">
           <form onSubmit={submitHandler} className="space-y-5">
             <div className="space-y-2">
@@ -67,8 +79,8 @@ const LoginPage = () => {
               <div className="relative">
                 <Mail className="icon-style" />
                 <Input
-                  type="email"
                   id="email"
+                  type="email"
                   placeholder="you@example.com"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
@@ -85,9 +97,9 @@ const LoginPage = () => {
               <div className="relative">
                 <Lock className="icon-style" />
                 <Input
-                  type="password"
                   id="password"
-                  placeholder="*********"
+                  type="password"
+                  placeholder="********"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   required
@@ -106,14 +118,14 @@ const LoginPage = () => {
             </div>
 
             <Button disabled={btnLoading} className="w-full">
-              {btnLoading ? "Signing in...." : "Sign In"}
+              {btnLoading ? "Signing in..." : "Sign In"}
               <ArrowRight size={18} />
             </Button>
           </form>
 
           <div className="mt-6 pt-6 border-t border-gray-400">
             <p className="text-center text-sm">
-              Don&apos;t have an account?{" "}
+              Don't have an account?{" "}
               <Link
                 href={"/register"}
                 className="text-blue-500 font-medium hover:underline transition-all"

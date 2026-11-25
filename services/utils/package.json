@@ -3,34 +3,37 @@
   "version": "1.0.0",
   "description": "",
   "main": "index.js",
-  "types": "module",
+  "type": "module",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
-    "build": "npm install && tsc",
+    "test": "vitest run",
+    "build": "tsc",
+    "typecheck": "tsc --noEmit",
     "start": "node dist/index.js",
-    "dev": "concurrently \"tsc -w\" \"nodemon dist/index.js\""
+    "dev": "tsc && concurrently \"tsc -w --preserveWatchOutput\" \"nodemon --delay 1 dist/index.js\""
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
-  "type": "commonjs",
   "dependencies": {
-    "@google/genai": "^3.0.0",
-    "@types/kafkajs": "^1.8.2",
-    "cloudinary": "^2.11.0",
-    "cors": "^2.8.6",
-    "dotenv": "^18.0.2",
-    "express": "^5.2.1",
+    "@careersync/common": "*",
+    "cloudinary": "^2.8.0",
+    "cors": "^2.8.5",
+    "dotenv": "^17.2.3",
+    "express": "^5.1.0",
     "kafkajs": "^2.2.4",
-    "nodemailer": "^10.0.15"
+    "nodemailer": "^9.0.3",
+    "pdf-parse": "^1.1.1",
+    "zod": "^3.24.1"
   },
   "devDependencies": {
     "@types/cors": "^2.8.19",
-    "@types/dotenv": "^6.1.1",
-    "@types/express": "^5.0.6",
-    "@types/nodemailer": "^8.0.2",
-    "concurrently": "^10.0.5",
-    "nodemon": "^1.14.10",
-    "typescript": "^7.0.2"
+    "@types/dotenv": "^8.2.3",
+    "@types/express": "^5.0.5",
+    "@types/nodemailer": "^7.0.3",
+    "@types/pdf-parse": "^1.1.5",
+    "concurrently": "^9.2.1",
+    "nodemon": "^3.1.10",
+    "typescript": "^5.9.3",
+    "vitest": "^3.0.5"
   }
 }
