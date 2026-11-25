@@ -16,6 +16,11 @@ const { metricsMiddleware, metricsHandler } = createMetrics(SERVICE_NAME);
 
 const app = express();
 
+// Behind Render's load balancer and the gateway, the socket address is the
+// proxy's, not the user's. Trust X-Forwarded-For so req.ip (used by the
+// rate limiter) is the real client IP instead of one shared proxy IP.
+app.set("trust proxy", true);
+
 app.use(cors());
 
 app.use(express.json());

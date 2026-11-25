@@ -28,6 +28,11 @@ const rateLimiter = createRateLimiter(redisClient);
 
 const app = express();
 
+// Behind Render's load balancer and the gateway, the socket address is the
+// proxy's, not the user's. Trust X-Forwarded-For so req.ip (used by the
+// rate limiter) is the real client IP instead of one shared proxy IP.
+app.set("trust proxy", true);
+
 // No body-parsing middleware here on purpose: this app only proxies,
 // and consuming the request stream up front would break streaming the
 // original (JSON or multipart) body through to the target service.
@@ -55,6 +60,9 @@ for (const [mountPath, target] of Object.entries(services)) {
     createProxyMiddleware({
       target,
       changeOrigin: true,
+      // Forward the client IP in X-Forwarded-For so each service rate-limits
+      // per user rather than per gateway.
+      xfwd: true,
       // Render's free tier spins a service down after ~15 min idle; a
       // cold start has taken up to ~45s to boot in practice. These are
       // explicit (not relying on http-proxy's own 120s/no-timeout
