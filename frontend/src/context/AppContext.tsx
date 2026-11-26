@@ -56,7 +56,10 @@ const clearAuthCookies = () => {
 // this pointer blocks the client from launching multiple duplicate token refresh requests
 let refreshInFlight: Promise<string | null> | null = null;
 
-const COLD_START_MAX_RETRIES = 3;
+// 8 retries x 6s ≈ 48s: enough for a sleeping Render free-tier service to
+// boot (observed 30-40s). Requests proxied through the gateway to a sleeping
+// service get an immediate 502 rather than being held, so we keep retrying.
+const COLD_START_MAX_RETRIES = 8;
 const COLD_START_RETRY_DELAY_MS = 6000;
 
 // A 502/503 at this layer means Render's edge couldn't reach our app at
@@ -163,6 +166,16 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
   const token = Cookies.get("token");
 
   async function fetchUser() {
+    // Logged-out visitors have no tokens at all: skip the round trip so the
+    // UI doesn't wait on a (possibly cold-starting) backend just to learn
+    // that. If only the refresh token is left, the 401 interceptor will
+    // still renew the session, so the call is made in that case.
+    if (!Cookies.get(ACCESS_TOKEN_COOKIE) && !Cookies.get(REFRESH_TOKEN_COOKIE)) {
+      setIsAuth(false);
+      setLoading(false);
+      return;
+    }
+
     try {
       const { data } = await axios.get(`${user_service}/api/user/me`, {
         headers: {
